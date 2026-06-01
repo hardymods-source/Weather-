@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>weather | Live Forecast</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+            background-size: 400% 400%;
+            animation: gradient 15s ease infinite;
+            color: white;
+        }
+
+        @keyframes gradient {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .glass-container {
+            background: rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            padding: 40px;
+            width: 90%;
+            max-width: 450px;
+            min-height: 550px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+        }
+
+        .search-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        input {
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            outline: none;
+            padding: 15px 20px;
+            border-radius: 50px;
+            color: white;
+            font-size: 16px;
+            width: 100%;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            transition: 0.3s;
+        }
+
+        input::placeholder {
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        input:focus {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .search-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            cursor: pointer;
+            margin-left: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: 0.3s;
+        }
+
+        .search-btn:hover {
+            background: rgba(255, 255, 255, 0.4);
+        }
+
+        .weather-icon {
+            width: 140px;
+            height: 140px;
+            margin: 10px auto;
+            display: block;
+        }
+
+        .temp-container {
+            text-align: center;
+        }
+
+        .temp {
+            font-size: 80px;
+            font-weight: 700;
+            letter-spacing: -2px;
+        }
+
+        .description {
+            font-size: 20px;
+            text-transform: capitalize;
+            letter-spacing: 2px;
+            margin-top: -10px;
+            text-align: center;
+            color: rgba(255,255,255,0.9);
+        }
+
+        .location {
+            text-align: center;
+            font-size: 28px;
+            font-weight: 500;
+            margin: 20px 0;
+            text-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .details {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .col {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .col i {
+            font-size: 30px;
+            margin-bottom: 5px;
+        }
+
+        .col span {
+            font-size: 14px;
+            opacity: 0.8;
+        }
+
+        .col h3 {
+            font-size: 20px;
+            font-weight: 500;
+        }
+
+        .error {
+            text-align: center;
+            margin-top: 20px;
+            display: none;
+            color: #ffcccc;
+        }
+
+        .loading {
+            text-align: center;
+            display: none;
+            margin-top: 20px;
+        }
+
+        .shape {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(50px);
+            z-index: -1;
+        }
+
+        .shape-1 {
+            width: 200px;
+            height: 200px;
+            background: #ff00cc;
+            top: -50px;
+            left: -50px;
+            opacity: 0.6;
+            animation: float 6s ease-in-out infinite;
+        }
+
+        .shape-2 {
+            width: 250px;
+            height: 250px;
+            background: #3333ff;
+            bottom: -80px;
+            right: -50px;
+            opacity: 0.6;
+            animation: float 8s ease-in-out infinite reverse;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(20px); }
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="shape shape-1"></div>
+    <div class="shape shape-2"></div>
+
+    <div class="glass-container">
+        <div class="search-bar">
+            <input type="text" placeholder="Enter city name" id="city-input">
+            <button class="search-btn" id="search-btn">
+                <i class="fas fa-search" style="color: white;"></i>
+            </button>
+        </div>
+
+        <div class="loading" id="loading">
+            <i class="fas fa-spinner fa-spin"></i> Loading...
+        </div>
+
+        <div class="error" id="error-msg">
+            <p>City not found</p>
+        </div>
+
+        <div class="weather-info" id="weather-info">
+            <div class="location" id="city-name">New York</div>
+            
+            <img src="https://img.icons8.com/color/144/000000/sun.png" alt="Weather Icon" class="weather-icon" id="weather-icon">
+            
+            <div class="temp-container">
+                <h1 class="temp" id="temp">--°C</h1>
+                <p class="description" id="weather-desc">Clear</p>
+            </div>
+
+            <div class="details">
+                <div class="col">
+                    <i class="fas fa-wind"></i>
+                    <span>Wind</span>
+                    <h3 id="wind">-- km/h</h3>
+                </div>
+                <div class="col">
+                    <i class="fas fa-tint"></i>
+                    <span>Humidity</span>
+                    <h3 id="humidity">--%</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const input = document.getElementById("city-input");
+        const btn = document.getElementById("search-btn");
+        const cityName = document.getElementById("city-name");
+        const temp = document.getElementById("temp");
+        const humidity = document.getElementById("humidity");
+        const wind = document.getElementById("wind");
+        const desc = document.getElementById("weather-desc");
+        const icon = document.getElementById("weather-icon");
+        const errorMsg = document.getElementById("error-msg");
+        const loading = document.getElementById("loading");
+        const weatherInfo = document.getElementById("weather-info");
+
+        // Weather codes mapping (WMO Weather interpretation codes)
+        const weatherCodes = {
+            0: { desc: "Clear sky", icon: "https://img.icons8.com/color/144/000000/sun.png" },
+            1: { desc: "Mainly clear", icon: "https://img.icons8.com/color/144/000000/partly-cloudy-day.png" },
+            2: { desc: "Partly cloudy", icon: "https://img.icons8.com/color/144/000000/partly-cloudy-day.png" },
+            3: { desc: "Overcast", icon: "https://img.icons8.com/color/144/000000/cloud.png" },
+            45: { desc: "Fog", icon: "https://img.icons8.com/color/144/000000/fog.png" },
+            48: { desc: "Depositing rime fog", icon: "https://img.icons8.com/color/144/000000/fog.png" },
+            51: { desc: "Light drizzle", icon: "https://img.icons8.com/color/144/000000/rain.png" },
+            53: { desc: "Moderate drizzle", icon: "https://img.icons8.com/color/144/000000/rain.png" },
+            55: { desc: "Dense drizzle", icon: "https://img.icons8.com/color/144/000000/rain.png" },
+            61: { desc: "Slight rain", icon: "https://img.icons8.com/color/144/000000/rain.png" },
+            63: { desc: "Moderate rain", icon: "https://img.icons8.com/color/144/000000/rain.png" },
+            65: { desc: "Heavy rain", icon: "https://img.icons8.com/color/144/000000/heavy-rain.png" },
+            71: { desc: "Slight snow", icon: "https://img.icons8.com/color/144/000000/snow.png" },
+            73: { desc: "Moderate snow", icon: "https://img.icons8.com/color/144/000000/snow.png" },
+            75: { desc: "Heavy snow", icon: "https://img.icons8.com/color/144/000000/snow.png" },
+            80: { desc: "Rain showers", icon: "https://img.icons8.com/color/144/000000/rain.png" },
+            95: { desc: "Thunderstorm", icon: "https://img.icons8.com/color/144/000000/thunderstorm.png" },
+            96: { desc: "Thunderstorm with hail", icon: "https://img.icons8.com/color/144/000000/thunderstorm.png" },
+            99: { desc: "Thunderstorm with hail", icon: "https://img.icons8.com/color/144/000000/thunderstorm.png" }
+        };
+
+        async function checkWeather(city) {
+            // Show loading, hide error and weather info
+            loading.style.display = "block";
+            errorMsg.style.display = "none";
+            weatherInfo.style.opacity = "0.5";
+
+            try {
+                // Step 1: Geocoding - Get lat/lon from city name
+                const geoResponse = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${city}&count=1&language=en&format=json`);
+                const geoData = await geoResponse.json();
+
+                if (!geoData.results || geoData.results.length === 0) {
+                    throw new Error("City not found");
+                }
+
+                const location = geoData.results[0];
+                const lat = location.latitude;
+                const lon = location.longitude;
+                const name = location.name;
+                const country = location.country || "";
+
+                // Step 2: Get weather data using lat/lon
+                const weatherResponse = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&temperature_unit=celsius&windspeed_unit=kmh`);
+                const weatherData = await weatherResponse.json();
+
+                const current = weatherData.current_weather;
+                const code = current.weathercode;
+
+                // Update UI
+                cityName.innerText = `${name}, ${country}`;
+                temp.innerText = `${Math.round(current.temperature)}°C`;
+                wind.innerText = `${current.windspeed} km/h`;
+                
+                // Set weather description and icon based on code
+                const weatherInfo = weatherCodes[code] || { desc: "Unknown", icon: "https://img.icons8.com/color/144/000000/cloud.png" };
+                desc.innerText = weatherInfo.desc;
+                icon.src = weatherInfo.icon;
+
+                // Note: Open-Meteo free tier doesn't include humidity in current_weather
+                // Using placeholder for demo
+                humidity.innerText = "--%";
+
+                errorMsg.style.display = "none";
+
+            } catch (error) {
+                errorMsg.style.display = "block";
+                console.log(error);
+            } finally {
+                // Hide loading
+                loading.style.display = "none";
+                weatherInfo.style.opacity = "1";
+            }
+        }
+
+        // Event Listeners
+        btn.addEventListener('click', () => {
+            if(input.value.trim() !== "") {
+                checkWeather(input.value);
+            }
+        });
+
+        input.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && input.value.trim() !== "") {
+                checkWeather(input.value);
+            }
+        });
+
+        // Load default city on start
+        checkWeather("New York");
+
+    </script>
+</body>
+</html>
